@@ -62,7 +62,6 @@ class Int8AveragePoolOp final : public ConvPoolOpBase<CPUContext> {
             Y->zero_point, Y->scale,
             activationLimits(Y->scale, Y->zero_point, Ac).first,
             activationLimits(Y->scale, Y->zero_point, Ac).second,
-            0 /* flags */,
             &this->qnnpackGlobalOperator_);
         CAFFE_ENFORCE(
             createStatus == qnnp_status_success,
@@ -103,7 +102,6 @@ class Int8AveragePoolOp final : public ConvPoolOpBase<CPUContext> {
           Y->zero_point, Y->scale,
           activationLimits(Y->scale, Y->zero_point, Ac).first,
           activationLimits(Y->scale, Y->zero_point, Ac).second,
-          0 /* flags */,
           &this->qnnpackOperator_);
         CAFFE_ENFORCE(
             createStatus == qnnp_status_success,

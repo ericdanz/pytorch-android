@@ -93,7 +93,6 @@ class Int8ConvOp final : public ConvPoolOpBase<CPUContext> {
             Y->scale,
             activationLimits(Y->scale, Y->zero_point, Ac).first,
             activationLimits(Y->scale, Y->zero_point, Ac).second,
-            0 /* flags */,
             &this->qnnpackObject_);
         CAFFE_ENFORCE(
             createStatus == qnnp_status_success,

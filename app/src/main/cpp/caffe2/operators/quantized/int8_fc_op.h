@@ -65,7 +65,6 @@ class Int8FCOp final : public Operator<CPUContext> {
             Y->scale,
             std::numeric_limits<uint8_t>::min(),
             std::numeric_limits<uint8_t>::max(),
-            0 /* flags */,
             &this->qnnpackObject_);
         CAFFE_ENFORCE(
             createStatus == qnnp_status_success,
@@ -89,7 +88,8 @@ class Int8FCOp final : public Operator<CPUContext> {
             inputPtr,
             K /* input stride */,
             Y->t.template mutable_data<uint8_t>(),
-            N /* output stride */);
+            N /* output stride */,
+            nullptr /* threadpool */);
         CAFFE_ENFORCE(
             setupStatus == qnnp_status_success,
             "failed to setup QNNPACK fully connected operator");

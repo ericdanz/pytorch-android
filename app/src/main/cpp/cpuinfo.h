@@ -544,10 +544,15 @@ struct cpuinfo_cluster {
 };
 
 #define CPUINFO_PACKAGE_NAME_MAX 48
+#define CPUINFO_GPU_NAME_MAX 64
 
 struct cpuinfo_package {
 	/** SoC or processor chip model name */
 	char name[CPUINFO_PACKAGE_NAME_MAX];
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+	/** Integrated GPU model name */
+	char gpu_name[CPUINFO_GPU_NAME_MAX];
+#endif
 	/** Index of the first logical processor on this physical package */
 	uint32_t processor_start;
 	/** Number of logical processors on this physical package */
@@ -1356,7 +1361,6 @@ static inline bool cpuinfo_has_x86_sha(void) {
 		#endif
 		bool rdm;
 		bool fp16arith;
-		bool dot;
 		bool jscvt;
 		bool fcma;
 
@@ -1579,14 +1583,6 @@ static inline bool cpuinfo_has_arm_neon_fp16_arith(void) {
 static inline bool cpuinfo_has_arm_fp16_arith(void) {
 	#if CPUINFO_ARCH_ARM || CPUINFO_ARCH_ARM64
 		return cpuinfo_isa.fp16arith;
-	#else
-		return false;
-	#endif
-}
-
-static inline bool cpuinfo_has_arm_neon_dot(void) {
-	#if CPUINFO_ARCH_ARM || CPUINFO_ARCH_ARM64
-		return cpuinfo_isa.dot;
 	#else
 		return false;
 	#endif
