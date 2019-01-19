@@ -15,8 +15,10 @@
 #include <android/log.h>
 #include <ATen/ATen.h>
 #include "classes.h"
-#define IMG_H 227
-#define IMG_W 227
+#define IMG_H 270
+#define IMG_W 480
+//#define IMG_H 227
+//#define IMG_W 227
 #define IMG_C 3
 #define MAX_DATA_SIZE IMG_H * IMG_W * IMG_C
 #define alog(...) __android_log_print(ANDROID_LOG_ERROR, "F8DEMO", __VA_ARGS__);
@@ -49,8 +51,10 @@ Java_facebook_f8demo_ClassifyCamera_initCaffe2(
         jobject assetManager) {
     AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
     alog("Attempting to load protobuf netdefs...");
-    loadToNetDef(mgr, &_initNet,   "resnet18_init_net_v1.pb");
-    loadToNetDef(mgr, &_predictNet,"resnet18_predict_net_v1.pb");
+//    loadToNetDef(mgr, &_initNet,   "resnet18_init_net_v1.pb");
+//    loadToNetDef(mgr, &_predictNet,"resnet18_predict_net_v1.pb");
+    loadToNetDef(mgr, &_initNet,   "shuf_esp2_kp_init_net_v1.pb");
+    loadToNetDef(mgr, &_predictNet,"shuf_esp2_kp_predict_net_v1.pb");
     alog("done.");
     alog("Instantiating predictor...");
     _predictor = new caffe2::Predictor(_initNet, _predictNet);
@@ -149,32 +153,32 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
     avg_fps = total_fps / iters_fps;
     total_fps -= avg_fps;
 
-    constexpr int k = 5;
-    float max[k] = {0};
-    int max_index[k] = {0};
-    // Find the top-k results manually.
-    for (auto output : output_vec) {
-        auto data = output.data<float>();
-        for (auto i = 0; i < output.size(); ++i) {
-            for (auto j = 0; j < k; ++j) {
-                if (data[i] > max[j]) {
-                    for (auto _j = k - 1; _j > j; --_j) {
-                        max[_j - 1] = max[_j];
-                        max_index[_j - 1] = max_index[_j];
-                    }
-                    max[j] = data[i];
-                    max_index[j] = i;
-                    goto skip;
-                }
-            }
-            skip:;
-        }
-    }
+//    constexpr int k = 5;
+//    float max[k] = {0};
+//    int max_index[k] = {0};
+//    // Find the top-k results manually.
+//    for (auto output : output_vec) {
+//        auto data = output.data<float>();
+//        for (auto i = 0; i < output.size(); ++i) {
+//            for (auto j = 0; j < k; ++j) {
+//                if (data[i] > max[j]) {
+//                    for (auto _j = k - 1; _j > j; --_j) {
+//                        max[_j - 1] = max[_j];
+//                        max_index[_j - 1] = max_index[_j];
+//                    }
+//                    max[j] = data[i];
+//                    max_index[j] = i;
+//                    goto skip;
+//                }
+//            }
+//            skip:;
+//        }
+//    }
     std::ostringstream stringStream;
     stringStream << avg_fps << " FPS\n";
 
-    for (auto j = 0; j < k; ++j) {
-        stringStream << j << ": " << imagenet_classes[max_index[j]] << " - " << max[j] / 10 << "%\n";
-    }
+//    for (auto j = 0; j < k; ++j) {
+//        stringStream << j << ": " << imagenet_classes[max_index[j]] << " - " << max[j] / 10 << "%\n";
+//    }
     return env->NewStringUTF(stringStream.str().c_str());
 }
