@@ -3,7 +3,7 @@
 #include <algorithm>
 #define PROTOBUF_USE_DLLS 1
 #define CAFFE2_USE_LITE_PROTO 1
-
+#include <unistd.h>
 #include <caffe2/predictor/predictor.h>
 #include <caffe2/core/operator.h>
 #include <caffe2/core/timer.h>
@@ -19,6 +19,8 @@
 #define IMG_W 480
 //#define IMG_H 227
 //#define IMG_W 227
+//#define IMG_H 270
+//#define IMG_W 270
 #define IMG_C 3
 #define MAX_DATA_SIZE IMG_H * IMG_W * IMG_C
 #define alog(...) __android_log_print(ANDROID_LOG_ERROR, "F8DEMO", __VA_ARGS__);
@@ -100,7 +102,13 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
     if (w < IMG_W) {
         iter_w = w;
     }
+//    alog("before data shaping %d %d",iter_h,iter_w);
+//    alog("%d %d",h_offset, w_offset);
+//    alog("%d y %d u %d v %d",pixelStride,Y_len, U_len, V_len);
 
+    float b_mean = 104.00698793f;
+    float g_mean = 116.66876762f;
+    float r_mean = 122.67891434f;
     for (auto i = 0; i < iter_h; ++i) {
         jbyte* Y_row = &Y_data[(h_offset + i) * w];
         jbyte* U_row = &U_data[(h_offset + i) / 2 * rowStride];
@@ -111,13 +119,10 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
             char u = U_row[pixelStride * ((w_offset+j)/pixelStride)];
             char v = V_row[pixelStride * ((w_offset+j)/pixelStride)];
 
-            float b_mean = 104.00698793f;
-            float g_mean = 116.66876762f;
-            float r_mean = 122.67891434f;
 
-            auto b_i = 0 * IMG_H * IMG_W + j * IMG_W + i;
-            auto g_i = 1 * IMG_H * IMG_W + j * IMG_W + i;
-            auto r_i = 2 * IMG_H * IMG_W + j * IMG_W + i;
+            auto b_i = 0 * IMG_H * IMG_W + i * IMG_W + j;
+            auto g_i = 1 * IMG_H * IMG_W + i * IMG_W + j;
+            auto r_i = 2 * IMG_H * IMG_W + i * IMG_W + j;
 
             if (infer_HWC) {
                 b_i = (j * IMG_W + i) * IMG_C;
@@ -129,13 +134,15 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
   G = Y - 0.34414 (U-128) - 0.71414 (V-128)
   B = Y + 1.772 (U-V)
  */
+
             input_data[r_i] = -r_mean + (float) ((float) min(255., max(0., (float) (y + 1.402 * (v - 128)))));
             input_data[g_i] = -g_mean + (float) ((float) min(255., max(0., (float) (y - 0.34414 * (u - 128) - 0.71414 * (v - 128)))));
             input_data[b_i] = -b_mean + (float) ((float) min(255., max(0., (float) (y + 1.772 * (u - v)))));
 
+
         }
     }
-
+//    alog("before input");
     caffe2::TensorCPU input;
     if (infer_HWC) {
         input = caffe2::Tensor(std::vector<int>({IMG_H, IMG_W, IMG_C}), caffe2::CPU);
@@ -152,6 +159,7 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
     total_fps += fps;
     avg_fps = total_fps / iters_fps;
     total_fps -= avg_fps;
+//    alog("after fps");
 
 //    constexpr int k = 5;
 //    float max[k] = {0};

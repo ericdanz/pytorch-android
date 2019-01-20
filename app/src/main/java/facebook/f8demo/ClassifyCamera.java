@@ -152,6 +152,8 @@ public class ClassifyCamera extends AppCompatActivity {
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
             // Transform you image captured size according to the surface width and height
+            Log.d("texturewidth",String.valueOf(width));
+            Log.d("textureheight",String.valueOf(height));
         }
         @Override
         public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
@@ -199,7 +201,7 @@ public class ClassifyCamera extends AppCompatActivity {
             assert texture != null;
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             Surface surface = new Surface(texture);
-            int width = 480;
+            int width = 640;
             int height = 480;
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 4);
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
@@ -215,6 +217,8 @@ public class ClassifyCamera extends AppCompatActivity {
                         processing = true;
                         int w = image.getWidth();
                         int h = image.getHeight();
+                        Log.d("imageh", String.valueOf(h));
+                        Log.d("imagew", String.valueOf(w));
                         ByteBuffer Ybuffer = image.getPlanes()[0].getBuffer();
                         ByteBuffer Ubuffer = image.getPlanes()[1].getBuffer();
                         ByteBuffer Vbuffer = image.getPlanes()[2].getBuffer();
@@ -250,6 +254,7 @@ public class ClassifyCamera extends AppCompatActivity {
             captureRequestBuilder.addTarget(surface);
             captureRequestBuilder.addTarget(reader.getSurface());
 
+//            cameraDevice.createCaptureSession(Arrays.asList( reader.getSurface()), new CameraCaptureSession.StateCallback(){
             cameraDevice.createCaptureSession(Arrays.asList(surface, reader.getSurface()), new CameraCaptureSession.StateCallback(){
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
