@@ -150,8 +150,9 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
         input = caffe2::Tensor(std::vector<int>({1, IMG_C, IMG_H, IMG_W}), caffe2::CPU);
     }
     memcpy(input.mutable_data<float>(), input_data, IMG_H * IMG_W * IMG_C * sizeof(float));
+    caffe2::TensorCPU out = caffe2::Tensor(std::vector<int>({1, 28, 67, 120}), caffe2::CPU);
     std::vector<caffe2::TensorCPU> input_vec({input});
-    std::vector<caffe2::TensorCPU> output_vec(1);
+    std::vector<caffe2::TensorCPU> output_vec({out});
     caffe2::Timer t;
     t.Start();
     (*_predictor)(input_vec, &output_vec);
@@ -159,7 +160,67 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
     total_fps += fps;
     avg_fps = total_fps / iters_fps;
     total_fps -= avg_fps;
-//    alog("after fps");
+    std::ostringstream stringStream;
+    stringStream << avg_fps << " FPS\n" << output_vec.size();
+//    int ii = 0;
+//    for (auto output : output_vec) {
+//        auto data = output.data<float>();
+//        ii = ii + 1;
+//    }
+//    stringStream << " " << ii ;
+    std::ostringstream keypoints_stream;
+//    keypoints_stream << output_vec[0].size() << " ";
+    auto out_v = output_vec[0].data<float>();
+//    keypoints_stream << out_v.size();
+//    int index = 0 + 25*67*12 + 50*120 + 50;
+
+//    keypoints_stream << out_v[index];
+//    return env->NewStringUTF(keypoints_stream.str().c_str());
+
+    for (auto i = 0; i < 67; ++i)
+        for (auto j = 0; j < 120; ++j)
+        {
+            int max_index = 25;
+            float max_val = 0;
+            //find the max in depth
+            for (auto k = 0; k < 26; ++k)
+            {
+                int index =  k * 67 * 120 + i * 120 + j;
+                float val = out_v[index];
+                if (val > max_val)
+                {
+                    max_val = val;
+                    max_index = k;
+                }
+            }
+
+            //if its bigger than neighbors in x and y, keep it
+            if (max_val > 0 && max_index != 25)
+            {
+                bool stop_checking = false;
+                for (auto io = i-2; io < i+4; ++io)
+                {
+                    for (auto jo = j-2; jo < j+4; ++jo)
+                    {
+                        if (jo == j and io == i and stop_checking) continue;
+                        //subtract 2 from io and jo to iterate over indices
+                        int index = max_index * 67 * 120 + io * 120 + jo;
+                        float check_val = out_v[index];
+                        if (check_val > max_val) {
+                            max_val = 0;
+                            max_index = 25;
+                            stop_checking = true;
+                        }
+
+                    }
+                }
+                if (!stop_checking){
+                    keypoints_stream << " " << max_index << "," << i << "," << j;
+                }
+            }
+
+        }
+        //keypoints_stream
 
 //    constexpr int k = 5;
 //    float max[k] = {0};
@@ -182,11 +243,10 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
 //            skip:;
 //        }
 //    }
-    std::ostringstream stringStream;
-    stringStream << avg_fps << " FPS\n";
+
 
 //    for (auto j = 0; j < k; ++j) {
 //        stringStream << j << ": " << imagenet_classes[max_index[j]] << " - " << max[j] / 10 << "%\n";
 //    }
-    return env->NewStringUTF(stringStream.str().c_str());
+    return env->NewStringUTF(keypoints_stream.str().c_str());
 }

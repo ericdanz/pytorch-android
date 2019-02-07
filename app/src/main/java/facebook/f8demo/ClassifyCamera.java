@@ -75,6 +75,8 @@ public class ClassifyCamera extends AppCompatActivity {
 
     public native String classificationFromCaffe2(int h, int w, byte[] Y, byte[] U, byte[] V,
                                                   int rowStride, int pixelStride, boolean r_hwc);
+    // public native int[] segmentationFromCaffe2(int h, int w, byte[] Y, byte[] U, byte[] V,
+    //                                               int rowStride, int pixelStride, boolean r_hwc);
     public native void initCaffe2(AssetManager mgr);
     private class SetUpNeuralNetwork extends AsyncTask<Void, Void, Void> {
         @Override
@@ -198,6 +200,7 @@ public class ClassifyCamera extends AppCompatActivity {
     protected void createCameraPreview() {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
+//            textureView.setAlpha(0.5f);
             assert texture != null;
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             Surface surface = new Surface(texture);
@@ -222,6 +225,7 @@ public class ClassifyCamera extends AppCompatActivity {
                         ByteBuffer Ybuffer = image.getPlanes()[0].getBuffer();
                         ByteBuffer Ubuffer = image.getPlanes()[1].getBuffer();
                         ByteBuffer Vbuffer = image.getPlanes()[2].getBuffer();
+
                         // TODO: use these for proper image processing on different formats.
                         int rowStride = image.getPlanes()[1].getRowStride();
                         int pixelStride = image.getPlanes()[1].getPixelStride();
@@ -234,10 +238,12 @@ public class ClassifyCamera extends AppCompatActivity {
 
                         predictedClass = classificationFromCaffe2(h, w, Y, U, V,
                                 rowStride, pixelStride, run_HWC);
+
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 tv.setText(predictedClass);
+
                                 processing = false;
                             }
                         });
