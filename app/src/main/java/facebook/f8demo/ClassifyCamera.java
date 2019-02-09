@@ -3,6 +3,7 @@ package facebook.f8demo;
 import android.Manifest;
 import android.app.ActionBar;
 import android.content.Context;
+
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.ImageFormat;
@@ -38,6 +39,12 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,6 +53,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.qualcomm.qti.snpe.NeuralNetwork;
+import com.qualcomm.qti.snpe.SNPE;
+import android.app.Application;
 
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
 
@@ -75,6 +85,8 @@ public class ClassifyCamera extends AppCompatActivity {
 
     public native String classificationFromCaffe2(int h, int w, byte[] Y, byte[] U, byte[] V,
                                                   int rowStride, int pixelStride, boolean r_hwc);
+    public native float[] convertImage(int h, int w, byte[] Y, byte[] U, byte[] V,
+                                                  int rowStride, int pixelStride, boolean r_hwc);
     // public native int[] segmentationFromCaffe2(int h, int w, byte[] Y, byte[] U, byte[] V,
     //                                               int rowStride, int pixelStride, boolean r_hwc);
     public native void initCaffe2(AssetManager mgr);
@@ -96,9 +108,24 @@ public class ClassifyCamera extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+        File model_file = new File("shuf.dlc");
+        final SNPE.NeuralNetworkBuilder builder;
+        try {
+            builder = new SNPE.NeuralNetworkBuilder((Application) getApplicationContext())
+                    // Allows selecting a runtime order for the network.
+                    // In the example below use DSP and fall back, in order, to GPU then CPU
+                    // depending on whether any of the runtimes is available.
+                    .setRuntimeOrder(NeuralNetwork.Runtime.GPU, NeuralNetwork.Runtime.CPU)
+                    // Loads a model from DLC file
+                    .setModel( model_file);
+            final NeuralNetwork network = builder.build();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         mgr = getResources().getAssets();
 
-        new SetUpNeuralNetwork().execute();
+//        new SetUpNeuralNetwork().execute();
 
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
@@ -235,8 +262,8 @@ public class ClassifyCamera extends AppCompatActivity {
                         Ybuffer.get(Y);
                         Ubuffer.get(U);
                         Vbuffer.get(V);
-
-                        predictedClass = classificationFromCaffe2(h, w, Y, U, V,
+                        float[] inputBuffer;
+                        inputBuffer = convertImage(h, w, Y, U, V,
                                 rowStride, pixelStride, run_HWC);
 
                         runOnUiThread(new Runnable() {
@@ -283,6 +310,7 @@ public class ClassifyCamera extends AppCompatActivity {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
             cameraId = manager.getCameraIdList()[0];
+
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;

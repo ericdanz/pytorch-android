@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId "facebook.f8demo"
         minSdkVersion 22
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -38,10 +38,12 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar', '*.so'], dir: 'libs')
+    implementation(name: 'snpe-release', ext: 'aar')
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     api 'com.android.support:appcompat-v7:25.4.0'
     api 'com.android.support.constraint:constraint-layout:1.1.3'
     testImplementation 'junit:junit:4.12'
+    implementation 'org.apache.directory.studio:org.apache.commons.io:2.4'
 }

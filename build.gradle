@@ -17,6 +17,12 @@ allprojects {
     repositories {
         google()
         jcenter()
+        flatDir {
+            // Marks the directory as a repository for
+            // dependencies. Place the snpe-release.aar
+            // in the directory below.
+            dirs 'libs'
+        }
     }
 }
 
